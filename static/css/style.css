@@ -1,0 +1,57 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #000;
+    height: 100vh;
+}
+
+#gameCanvas {
+    border: 2px solid white;
+    margin-top: 20px;
+}
+
+#controls {
+    margin-top: 20px;
+    display: grid;
+    grid-template-areas:
+        ". up ."
+        "left . right"
+        ". down .";
+    gap: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #808080;
+    color: #000;
+    border: none;
+    cursor: pointer;
+    width: 100px;
+    height: 50px;
+}
+
+button:hover {
+    background-color: #c8c8c8;
+}
+
+#upBtn { grid-area: up; }
+#leftBtn { grid-area: left; }
+#rightBtn { grid-area: right; }
+#downBtn { grid-area: down; }
+
+#difficultyScreen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 20px;
+}
+
+#difficultyScreen button {
+    margin: 0 10px;
+}
