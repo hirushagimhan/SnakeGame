@@ -1,57 +1,149 @@
-body {
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a;
+    color: #fff;
+    min-height: 100vh;
     display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-container {
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    text-align: center;
+}
+
+canvas {
+    background-color: #000;
+    border: 2px solid #32cd32;
+    max-width: 100%;
+    height: auto;
+    margin: 10px 0;
+}
+
+.score-display {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #32cd32;
+}
+
+.controls {
+    margin-top: 20px;
+}
+
+#startBtn {
+    background-color: #32cd32;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.mobile-controls {
+    display: none;
     flex-direction: column;
     align-items: center;
-    background-color: #000;
-    height: 100vh;
-}
-
-#gameCanvas {
-    border: 2px solid white;
-    margin-top: 20px;
-}
-
-#controls {
-    margin-top: 20px;
-    display: grid;
-    grid-template-areas:
-        ". up ."
-        "left . right"
-        ". down .";
     gap: 10px;
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 18px;
-    background-color: #808080;
-    color: #000;
-    border: none;
-    cursor: pointer;
-    width: 100px;
-    height: 50px;
-}
-
-button:hover {
-    background-color: #c8c8c8;
-}
-
-#upBtn { grid-area: up; }
-#leftBtn { grid-area: left; }
-#rightBtn { grid-area: right; }
-#downBtn { grid-area: down; }
-
-#difficultyScreen {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+.horizontal-controls {
     display: flex;
     gap: 20px;
 }
 
-#difficultyScreen button {
-    margin: 0 10px;
+.mobile-controls button {
+    width: 60px;
+    height: 60px;
+    background-color: rgba(50, 205, 50, 0.7);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #2a2a2a;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 400px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+.modal h2 {
+    color: #32cd32;
+    margin-bottom: 20px;
+}
+
+.modal input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #1a1a1a;
+    border: 1px solid #32cd32;
+    color: white;
+    border-radius: 5px;
+}
+
+.modal button {
+    background-color: #32cd32;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.high-scores {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.high-scores h3 {
+    color: #32cd32;
+    margin-bottom: 10px;
+}
+
+#highScoresList {
+    list-style: none;
+}
+
+#highScoresList li {
+    padding: 5px 0;
+    border-bottom: 1px solid #444;
+}
+
+@media (max-width: 768px) {
+    .mobile-controls {
+        display: flex;
+    }
+    
+    canvas {
+        aspect-ratio: 1;
+    }
 }

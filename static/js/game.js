@@ -1,246 +1,333 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-// Constants
-const GRID_SIZE = 20;
-const GRID_WIDTH = canvas.width / GRID_SIZE;
-const GRID_HEIGHT = canvas.height / GRID_SIZE;
-
-// Colors
-const BLACK = '#000000';
-const WHITE = '#FFFFFF';
-const GREEN = '#00FF00';
-const RED = '#FF0000';
-
-// Game objects
-let snake, food;
-let gameSpeed;
-let gameLoop;
-let running = false;
-
-class Snake {
+class SnakeGame {
     constructor() {
-        this.length = 1;
-        this.positions = [[(canvas.width / 2), (canvas.height / 2)]];
-        this.direction = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'][Math.floor(Math.random() * 4)];
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.scoreElement = document.getElementById('score');
+        this.startBtn = document.getElementById('startBtn');
+        this.gameOverModal = document.getElementById('gameOverModal');
+        this.finalScoreElement = document.getElementById('finalScore');
+        this.playerNameInput = document.getElementById('playerName');
+        this.submitScoreBtn = document.getElementById('submitScore');
+        this.playAgainBtn = document.getElementById('playAgain');
+        this.highScoresList = document.getElementById('highScoresList');
+
+        // Set canvas size
+        this.canvas.width = 300;
+        this.canvas.height = 300;
+        
+        // Grid settings
+        this.gridSize = 15;
+        this.tileSize = this.canvas.width / this.gridSize;
+
+        // Game state
+        this.reset();
+        
+        // Bind methods
+        this.handleKeyPress = this.handleKeyPress.bind(this);
+        this.gameLoop = this.gameLoop.bind(this);
+        this.start = this.start.bind(this);
+        
+        // Event listeners
+        this.startBtn.addEventListener('click', this.start);
+        document.addEventListener('keydown', this.handleKeyPress);
+        this.submitScoreBtn.addEventListener('click', () => this.submitScore());
+        this.playAgainBtn.addEventListener('click', () => this.restart());
+        
+        // Mobile controls
+        this.setupMobileControls();
+        
+        // Load high scores
+        this.loadHighScores();
+    }
+
+    reset() {
+        this.snake = [{x: 7, y: 7}];
+        this.food = this.generateFood();
+        this.direction = 'right';
+        this.nextDirection = 'right';
         this.score = 0;
+        this.gameOver = false;
+        this.scoreElement.textContent = this.score;
     }
 
-    getHeadPosition() {
-        return this.positions[0];
+    generateFood() {
+        let position;
+        do {
+            position = {
+                x: Math.floor(Math.random() * this.gridSize),
+                y: Math.floor(Math.random() * this.gridSize)
+            };
+        } while (this.snake.some(segment => segment.x === position.x && segment.y === position.y));
+        return position;
     }
 
-    turn(direction) {
-        const opposites = {
-            'ArrowUp': 'ArrowDown',
-            'ArrowDown': 'ArrowUp',
-            'ArrowLeft': 'ArrowRight',
-            'ArrowRight': 'ArrowLeft'
-        };
+    start() {
+        this.reset();
+        this.startBtn.style.display = 'none';
+        this.gameOverModal.style.display = 'none';
+        this.gameLoop();
+    }
 
-        if (opposites[direction] !== this.direction) {
-            this.direction = direction;
-        }
+    restart() {
+        this.gameOverModal.style.display = 'none';
+        this.start();
+    }
+
+    draw() {
+        // Clear canvas
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Draw snake
+        this.ctx.fillStyle = '#32CD32';
+        this.snake.forEach((segment, index) => {
+            if (index === 0) {
+                // Draw head with eyes
+                this.ctx.fillRect(
+                    segment.x * this.tileSize,
+                    segment.y * this.tileSize,
+                    this.tileSize,
+                    this.tileSize
+                );
+                
+                // Draw eyes
+                this.ctx.fillStyle = '#000000';
+                const eyeSize = this.tileSize / 6;
+                const eyeOffset = this.tileSize / 4;
+                
+                switch(this.direction) {
+                    case 'right':
+                        this.ctx.fillRect(
+                            (segment.x + 1) * this.tileSize - eyeOffset,
+                            segment.y * this.tileSize + eyeOffset,
+                            eyeSize,
+                            eyeSize
+                        );
+                        this.ctx.fillRect(
+                            (segment.x + 1) * this.tileSize - eyeOffset,
+                            (segment.y + 1) * this.tileSize - eyeOffset - eyeSize,
+                            eyeSize,
+                            eyeSize
+                        );
+                        break;
+                    case 'left':
+                        this.ctx.fillRect(
+                            segment.x * this.tileSize + eyeOffset - eyeSize,
+                            segment.y * this.tileSize + eyeOffset,
+                            eyeSize,
+                            eyeSize
+                        );
+                        this.ctx.fillRect(
+                            segment.x * this.tileSize + eyeOffset - eyeSize,
+                            (segment.y + 1) * this.tileSize - eyeOffset - eyeSize,
+                            eyeSize,
+                            eyeSize
+                        );
+                        break;
+                    case 'up':
+                        this.ctx.fillRect(
+                            segment.x * this.tileSize + eyeOffset,
+                            segment.y * this.tileSize + eyeOffset - eyeSize,
+                            eyeSize,
+                            eyeSize
+                        );
+                        this.ctx.fillRect(
+                            (segment.x + 1) * this.tileSize - eyeOffset - eyeSize,
+                            segment.y * this.tileSize + eyeOffset - eyeSize,
+                            eyeSize,
+                            eyeSize
+                        );
+                        break;
+                    case 'down':
+                        this.ctx.fillRect(
+                            segment.x * this.tileSize + eyeOffset,
+                            (segment.y + 1) * this.tileSize - eyeOffset,
+                            eyeSize,
+                            eyeSize
+                        );
+                        this.ctx.fillRect(
+                            (segment.x + 1) * this.tileSize - eyeOffset - eyeSize,
+                            (segment.y + 1) * this.tileSize - eyeOffset,
+                            eyeSize,
+                            eyeSize
+                        );
+                        break;
+                }
+                this.ctx.fillStyle = '#32CD32';
+            } else {
+                this.ctx.fillRect(
+                    segment.x * this.tileSize,
+                    segment.y * this.tileSize,
+                    this.tileSize,
+                    this.tileSize
+                );
+            }
+        });
+
+        // Draw food
+        this.ctx.fillStyle = '#FF0000';
+        this.ctx.beginPath();
+        this.ctx.arc(
+            (this.food.x + 0.5) * this.tileSize,
+            (this.food.y + 0.5) * this.tileSize,
+            this.tileSize / 2,
+            0,
+            Math.PI * 2
+        );
+        this.ctx.fill();
     }
 
     move() {
-        const head = this.getHeadPosition();
-        let newX = head[0];
-        let newY = head[1];
-
-        switch (this.direction) {
-            case 'ArrowUp': newY -= GRID_SIZE; break;
-            case 'ArrowDown': newY += GRID_SIZE; break;
-            case 'ArrowLeft': newX -= GRID_SIZE; break;
-            case 'ArrowRight': newX += GRID_SIZE; break;
+        this.direction = this.nextDirection;
+        const head = {...this.snake[0]};
+        
+        // Move head based on direction
+        switch(this.direction) {
+            case 'up': head.y--; break;
+            case 'down': head.y++; break;
+            case 'left': head.x--; break;
+            case 'right': head.x++; break;
         }
 
-        // Check wall collision
-        if (newX < 0 || newX >= canvas.width || newY < 0 || newY >= canvas.height) {
-            return false;
+        // Check for collisions
+        if (this.checkCollision(head)) {
+            this.gameOver = true;
+            return;
         }
 
-        // Check self collision
-        if (this.positions.slice(2).some(pos => pos[0] === newX && pos[1] === newY)) {
-            return false;
-        }
+        // Add new head
+        this.snake.unshift(head);
 
-        this.positions.unshift([newX, newY]);
-        if (this.positions.length > this.length) {
-            this.positions.pop();
+        // Check if food was eaten
+        if (head.x === this.food.x && head.y === this.food.y) {
+            this.score += 10;
+            this.scoreElement.textContent = this.score;
+            this.food = this.generateFood();
+        } else {
+            this.snake.pop();
         }
-
-        return true;
     }
 
-    draw() {
-        ctx.fillStyle = GREEN;
-        this.positions.forEach((pos, i) => {
-            const rect = [pos[0], pos[1], GRID_SIZE, GRID_SIZE];
-            ctx.fillRect(...rect);
+    checkCollision(head) {
+        // Wall collision
+        if (head.x < 0 || head.x >= this.gridSize || 
+            head.y < 0 || head.y >= this.gridSize) {
+            return true;
+        }
 
-            // Draw eyes on head
-            if (i === 0) {
-                const eyeSize = GRID_SIZE / 4;
-                const eyeMargin = GRID_SIZE / 4;
-                const pupilSize = GRID_SIZE / 8;
+        // Self collision
+        return this.snake.some(segment => segment.x === head.x && segment.y === head.y);
+    }
 
-                // Calculate eye positions based on direction
-                let leftEye, rightEye;
-                switch (this.direction) {
-                    case 'ArrowUp':
-                        leftEye = [pos[0] + eyeMargin, pos[1] + eyeMargin];
-                        rightEye = [pos[0] + GRID_SIZE - eyeMargin, pos[1] + eyeMargin];
-                        break;
-                    case 'ArrowDown':
-                        leftEye = [pos[0] + eyeMargin, pos[1] + GRID_SIZE - eyeMargin];
-                        rightEye = [pos[0] + GRID_SIZE - eyeMargin, pos[1] + GRID_SIZE - eyeMargin];
-                        break;
-                    case 'ArrowLeft':
-                        leftEye = [pos[0] + eyeMargin, pos[1] + eyeMargin];
-                        rightEye = [pos[0] + eyeMargin, pos[1] + GRID_SIZE - eyeMargin];
-                        break;
-                    case 'ArrowRight':
-                        leftEye = [pos[0] + GRID_SIZE - eyeMargin, pos[1] + eyeMargin];
-                        rightEye = [pos[0] + GRID_SIZE - eyeMargin, pos[1] + GRID_SIZE - eyeMargin];
-                        break;
-                }
+    handleKeyPress(event) {
+        const key = event.key.toLowerCase();
+        
+        // Prevent reversing direction
+        switch(key) {
+            case 'arrowup':
+            case 'w':
+                if (this.direction !== 'down') this.nextDirection = 'up';
+                break;
+            case 'arrowdown':
+            case 's':
+                if (this.direction !== 'up') this.nextDirection = 'down';
+                break;
+            case 'arrowleft':
+            case 'a':
+                if (this.direction !== 'right') this.nextDirection = 'left';
+                break;
+            case 'arrowright':
+            case 'd':
+                if (this.direction !== 'left') this.nextDirection = 'right';
+                break;
+        }
+    }
 
-                // Draw white of eyes
-                ctx.fillStyle = WHITE;
-                ctx.beginPath();
-                ctx.arc(leftEye[0], leftEye[1], eyeSize, 0, Math.PI * 2);
-                ctx.arc(rightEye[0], rightEye[1], eyeSize, 0, Math.PI * 2);
-                ctx.fill();
+    setupMobileControls() {
+        const upBtn = document.getElementById('upBtn');
+        const downBtn = document.getElementById('downBtn');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
 
-                // Draw pupils with slight randomness
-                ctx.fillStyle = BLACK;
-                const pupilOffset = 2;
-                ctx.beginPath();
-                ctx.arc(
-                    leftEye[0] + Math.random() * pupilOffset * 2 - pupilOffset,
-                    leftEye[1] + Math.random() * pupilOffset * 2 - pupilOffset,
-                    pupilSize, 0, Math.PI * 2
-                );
-                ctx.arc(
-                    rightEye[0] + Math.random() * pupilOffset * 2 - pupilOffset,
-                    rightEye[1] + Math.random() * pupilOffset * 2 - pupilOffset,
-                    pupilSize, 0, Math.PI * 2
-                );
-                ctx.fill();
-            }
+        upBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (this.direction !== 'down') this.nextDirection = 'up';
+        });
+
+        downBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (this.direction !== 'up') this.nextDirection = 'down';
+        });
+
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (this.direction !== 'right') this.nextDirection = 'left';
+        });
+
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (this.direction !== 'left') this.nextDirection = 'right';
         });
     }
 
-    drawScore() {
-        ctx.fillStyle = WHITE;
-        ctx.font = '36px Arial';
-        ctx.fillText(`Score: ${this.score}`, 10, 40);
+    async loadHighScores() {
+        try {
+            const response = await fetch('/get_high_scores');
+            const scores = await response.json();
+            this.updateHighScoresList(scores);
+        } catch (error) {
+            console.error('Error loading high scores:', error);
+        }
+    }
+
+    updateHighScoresList(scores) {
+        this.highScoresList.innerHTML = '';
+        scores.forEach((score, index) => {
+            const li = document.createElement('li');
+            li.textContent = `${index + 1}. ${score.name}: ${score.score}`;
+            this.highScoresList.appendChild(li);
+        });
+    }
+
+    async submitScore() {
+        const name = this.playerNameInput.value.trim() || 'Anonymous';
+        try {
+            await fetch('/submit_score', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    score: this.score
+                })
+            });
+            await this.loadHighScores();
+        } catch (error) {
+            console.error('Error submitting score:', error);
+        }
+    }
+
+    gameLoop() {
+        if (!this.gameOver) {
+            this.move();
+            this.draw();
+            
+            // Calculate speed based on score (game gets faster as score increases)
+            const baseSpeed = 150;
+            const speedIncrease = Math.floor(this.score / 50) * 10;
+            const gameSpeed = Math.max(baseSpeed - speedIncrease, 70);
+            
+            setTimeout(this.gameLoop, gameSpeed);
+        } else {
+            this.finalScoreElement.textContent = this.score;
+            this.gameOverModal.style.display = 'block';
+            this.startBtn.style.display = 'block';
+        }
     }
 }
 
-class Food {
-    constructor() {
-        this.position = [0, 0];
-        this.randomizePosition();
-    }
-
-    randomizePosition() {
-        this.position = [
-            Math.floor(Math.random() * GRID_WIDTH) * GRID_SIZE,
-            Math.floor(Math.random() * GRID_HEIGHT) * GRID_SIZE
-        ];
-    }
-
-    draw() {
-        ctx.fillStyle = RED;
-        ctx.fillRect(this.position[0], this.position[1], GRID_SIZE, GRID_SIZE);
-    }
-}
-
-function setupGame() {
-    const difficultyScreen = document.getElementById('difficultyScreen');
-    const gameControls = document.getElementById('controls');
-    
-    difficultyScreen.style.display = 'flex';
-    gameControls.style.display = 'none';
-    canvas.style.display = 'none';
-
-    document.getElementById('easyBtn').onclick = () => startGame(5);
-    document.getElementById('mediumBtn').onclick = () => startGame(10);
-    document.getElementById('hardBtn').onclick = () => startGame(15);
-}
-
-function startGame(speed) {
-    gameSpeed = speed;
-    const difficultyScreen = document.getElementById('difficultyScreen');
-    const gameControls = document.getElementById('controls');
-    
-    difficultyScreen.style.display = 'none';
-    gameControls.style.display = 'grid';
-    canvas.style.display = 'block';
-
-    snake = new Snake();
-    food = new Food();
-    running = true;
-
-    if (gameLoop) clearInterval(gameLoop);
-    gameLoop = setInterval(gameStep, 1000 / gameSpeed);
-}
-
-function gameStep() {
-    if (!running) return;
-
-    if (!snake.move()) {
-        gameOver();
-        return;
-    }
-
-    const head = snake.getHeadPosition();
-    if (head[0] === food.position[0] && head[1] === food.position[1]) {
-        snake.length += 1;
-        snake.score += 1;
-        food.randomizePosition();
-    }
-
-    ctx.fillStyle = BLACK;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    snake.draw();
-    food.draw();
-    snake.drawScore();
-}
-
-function gameOver() {
-    running = false;
-    clearInterval(gameLoop);
-
-    ctx.fillStyle = BLACK;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = WHITE;
-    ctx.font = '36px Arial';
-    const text = `Game Over! Score: ${snake.score}`;
-    const textMetrics = ctx.measureText(text);
-    ctx.fillText(text, (canvas.width - textMetrics.width) / 2, canvas.height / 2);
-
-    setTimeout(() => {
-        setupGame();
-    }, 2000);
-}
-
-// Event Listeners
-document.addEventListener('keydown', (event) => {
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-        snake.turn(event.key);
-    }
+// Initialize game when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new SnakeGame();
 });
-
-// Touch controls
-document.getElementById('upBtn').onclick = () => snake.turn('ArrowUp');
-document.getElementById('downBtn').onclick = () => snake.turn('ArrowDown');
-document.getElementById('leftBtn').onclick = () => snake.turn('ArrowLeft');
-document.getElementById('rightBtn').onclick = () => snake.turn('ArrowRight');
-
-// Start the game
-setupGame();

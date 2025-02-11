@@ -2,23 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Snake Game</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="controls">
-        <button id="upBtn">UP</button>
-        <button id="downBtn">DOWN</button>
-        <button id="leftBtn">LEFT</button>
-        <button id="rightBtn">RIGHT</button>
+    <div class="game-container">
+        <div class="score-display">Score: <span id="score">0</span></div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="controls">
+            <button id="startBtn">Start Game</button>
+            <div class="mobile-controls">
+                <button id="upBtn">↑</button>
+                <div class="horizontal-controls">
+                    <button id="leftBtn">←</button>
+                    <button id="rightBtn">→</button>
+                </div>
+                <button id="downBtn">↓</button>
+            </div>
+        </div>
     </div>
-    <div id="difficultyScreen">
-        <button id="easyBtn">Easy</button>
-        <button id="mediumBtn">Medium</button>
-        <button id="hardBtn">Hard</button>
+
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <p>Your Score: <span id="finalScore">0</span></p>
+            <input type="text" id="playerName" placeholder="Enter your name">
+            <button id="submitScore">Submit Score</button>
+            <button id="playAgain">Play Again</button>
+            <div class="high-scores">
+                <h3>High Scores</h3>
+                <ul id="highScoresList"></ul>
+            </div>
+        </div>
     </div>
+
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
 </body>
 </html>
